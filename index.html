@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es" data-lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordWeaver Equation Lab</title>
+    <meta name="description" content="Convierte textos y ecuaciones de IA directamente a Word y PDF con formato nativo y académico.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Librerías Externas -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Configuración de MathJax para renderizar ecuaciones -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="logo-area">
+                <img src="assets/logo.png" alt="WordWeaver Logo" class="nav-logo">
+                <span class="nav-title">WordWeaver <span class="highlight">Web</span></span>
+            </div>
+            <div class="nav-links">
+                <button class="btn-lang" id="langToggle" onclick="toggleLang()">🌐 EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+        <div class="container workspace-container">
+            
+            <header class="workspace-header">
+                <h1 data-es="Convierte Ecuaciones de IA en Documentos" data-en="Convert AI Equations Into Documents">
+                    Convierte Ecuaciones de IA en Documentos <span class="highlight-gradient">Profesionales</span>
+                </h1>
+                <p data-es="Pega tu Markdown con ecuaciones abajo para comenzar la conversión." data-en="Paste your Markdown with equations below to begin conversion.">Pega tu Markdown con ecuaciones abajo para comenzar la conversión.</p>
+            </header>
+
+            <div class="controls-bar">
+                <div class="control-group">
+                    <label for="aiSource" data-es="Fuente IA:" data-en="AI Source:">Fuente IA:</label>
+                    <select id="aiSource" class="select-box">
+                        <option value="Gemini AI">Gemini AI</option>
+                        <option value="ChatGPT">ChatGPT</option>
+                        <option value="DeepSeek">DeepSeek</option>
+                        <option value="Google Modo IA">Google Modo IA</option>
+                        <option value="NotebookLM Chat">NotebookLM Chat</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="fontSelect" data-es="Fuente:" data-en="Font:">Fuente:</label>
+                    <select id="fontSelect" class="select-box">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontSize" data-es="Tamaño:" data-en="Size:">Tamaño:</label>
+                    <select id="fontSize" class="select-box">
+                        <option value="10">10</option>
+                        <option value="11" selected>11</option>
+                        <option value="12">12</option>
+                        <option value="14">14</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="editor-area">
+                <textarea id="markdownInput" placeholder="Pega tu texto aquí..." spellcheck="false"></textarea>
+            </div>
+
+            <div class="action-bar">
+                <div class="action-left">
+                    <button id="btnPaste" class="btn btn-secondary" onclick="pasteText()">
+                        📋 <span data-es="Pegar" data-en="Paste">Pegar</span>
+                    </button>
+                    <button id="btnClear" class="btn btn-secondary" onclick="clearText()">
+                        🧹 <span data-es="Limpiar" data-en="Clear">Limpiar</span>
+                    </button>
+                </div>
+                <div class="action-right">
+                    <button id="btnWord" class="btn btn-primary" onclick="exportWord()">
+                        📄 <span data-es="A Word (.doc)" data-en="To Word (.doc)">A Word (.doc)</span>
+                    </button>
+                    <button id="btnPdf" class="btn btn-primary" onclick="exportPDF()">
+                        📄 <span data-es="A PDF" data-en="To PDF">A PDF</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="statusMessage" class="status-message"></div>
+
+        </div>
+    </main>
+
+    <!-- Área oculta para renderizar el contenido antes de exportar -->
+    <div id="renderArea" style="display: none;"></div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <img src="assets/logo.png" alt="Logo" class="footer-logo">
+                <span>WordWeaver Equation Lab</span>
+            </div>
+            <div class="footer-text">
+                <p>Developed by: <strong>EP Brothers Software Services</strong></p>
+                <p>© 2026 Reservados todos los derechos.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="logic.js"></script>
+</body>
+</html>

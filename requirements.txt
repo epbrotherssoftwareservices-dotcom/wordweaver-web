@@ -1,0 +1,10 @@
+Flask
+Flask-CORS
+markdown
+beautifulsoup4
+lxml
+python-docx
+latex2mathml
+mathml2omml
+
+gunicorn
