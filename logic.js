@@ -325,23 +325,35 @@ async function exportWord() {
         
         // Procesar descarga del archivo .docx nativo
         const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Documento_${aiSource.replace(/ /g, "_")}.docx`;
-        document.body.appendChild(a);
-        a.click();
         
-        // Limpiar
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Soporte específico para navegadores antiguos de Microsoft (IE/Edge clásico)
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, `Documento_${aiSource.replace(/ /g, "_")}.docx`);
+        } else {
+            // Soporte para Chrome, Firefox, Safari, Edge Moderno
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `Documento_${aiSource.replace(/ /g, "_")}.docx`;
+            document.body.appendChild(a);
+            
+            // Simular clic
+            a.click();
+            
+            // Limpiar con un ligero retraso (Crítico para que Google Chrome no cancele la descarga)
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 500);
+        }
         
         setStatus('success', 'success');
     } catch (error) {
         console.error("Error exportando a Word:", error);
         setStatus('general_error', 'error');
     } finally {
-        // Restaurar el estado del botón
+        // Restaurar el estado del botón EXACTAMENTE CUANDO LA DESCARGA EMPIEZA
         btn.disabled = false;
         btn.style.opacity = '1';
         btn.innerHTML = originalBtnHTML;
