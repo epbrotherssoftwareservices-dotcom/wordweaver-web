@@ -108,6 +108,38 @@ function preprocessText(text, aiSource) {
     return text;
 }
 
+// ── Sistema de Visitantes ──
+async function initVisitorCounter() {
+    try {
+        // Utilizamos una API pública y gratuita para llevar el conteo
+        const response = await fetch('https://api.counterapi.dev/v1/wordweaver_emil_paz/visits/up');
+        const data = await response.json();
+        document.getElementById('visitCount').innerText = data.count;
+    } catch (error) {
+        console.error("No se pudo cargar el contador de visitas:", error);
+        document.getElementById('visitCount').innerText = "-";
+    }
+}
+
+// ── Inicialización ──
+document.addEventListener('DOMContentLoaded', () => {
+    initVisitorCounter();
+    
+    document.getElementById('markdownInput').addEventListener('input', () => {
+        const val = document.getElementById('markdownInput').value;
+        if (val) {
+            setStatus('processing', 'info');
+            clearTimeout(window.previewTimeout);
+            window.previewTimeout = setTimeout(() => {
+                prepareContent(false).then(() => setStatus('success', 'success'));
+            }, 800);
+        } else {
+            document.getElementById('renderArea').innerHTML = '';
+            document.getElementById('statusMessage').innerText = '';
+        }
+    });
+});
+
 // ── Renderización y Pipeline de Contenido ──
 async function prepareContent(forWord = false) {
     const rawText = document.getElementById('markdownInput').value.trim();
@@ -261,9 +293,18 @@ async function exportWord() {
     
     setStatus('processing', 'info');
     
+    const btn = document.getElementById('btnWord');
+    const originalBtnHTML = btn.innerHTML;
+    const isEnglish = document.documentElement.getAttribute('data-lang') === 'en';
+    
+    // Cambiar botón a estado de carga
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.innerHTML = isEnglish ? '⏳ Processing... (May take a moment)' : '⏳ Procesando... (Puede tardar un momento)';
+    
     try {
         // En producción, cambiaremos esta URL por la de Render
-        const apiUrl = 'https://wordweaver-api-gbrz.onrender.com/api/export_word';
+        const apiUrl = 'https://wordweaver-api-abcd.onrender.com/api/export_word';
         
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -299,5 +340,10 @@ async function exportWord() {
     } catch (error) {
         console.error("Error exportando a Word:", error);
         setStatus('general_error', 'error');
+    } finally {
+        // Restaurar el estado del botón
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = originalBtnHTML;
     }
 }
