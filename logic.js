@@ -24,7 +24,7 @@ function applyLang(lang) {
 function setStatus(msgKey, type) {
     const statusEl = document.getElementById('statusMessage');
     statusEl.className = `status-message status-${type}`;
-    
+
     const messages = {
         'processing': { es: 'Procesando ecuaciones...', en: 'Processing equations...' },
         'pdf_success': { es: '¡PDF generado con éxito!', en: 'PDF successfully generated!' },
@@ -35,7 +35,7 @@ function setStatus(msgKey, type) {
     };
 
     statusEl.textContent = messages[msgKey][currentLang];
-    
+
     // Clear after 3 seconds if it's a success or info message
     if (type !== 'processing') {
         setTimeout(() => {
@@ -99,14 +99,19 @@ function preprocessGeneric(text) {
 function preprocessText(text, aiSource) {
     text = preprocessGeneric(text);
     const source = aiSource.toLowerCase();
-    
+
     if (source.includes("deepseek")) text = preprocessDeepSeek(text);
     else if (source.includes("google")) text = preprocessGoogleIA(text);
     else if (source.includes("notebooklm")) text = preprocessNotebookLM(text);
     else if (source.includes("gemini")) text = preprocessGemini(text);
-    
+
     return text;
 }
+
+// Traducciones de la UI
+const translations = {
+    // ...
+};
 
 // ── Sistema de Visitantes ──
 async function initVisitorCounter() {
@@ -124,7 +129,7 @@ async function initVisitorCounter() {
 // ── Inicialización ──
 document.addEventListener('DOMContentLoaded', () => {
     initVisitorCounter();
-    
+
     document.getElementById('markdownInput').addEventListener('input', () => {
         const val = document.getElementById('markdownInput').value;
         if (val) {
@@ -149,18 +154,18 @@ async function prepareContent(forWord = false) {
     }
 
     setStatus('processing', 'info');
-    
+
     const aiSource = document.getElementById('aiSource').value;
     const fontName = document.getElementById('fontSelect').value;
     const fontSize = document.getElementById('fontSize').value;
-    
+
     // 1. Preprocesar texto de la IA
     let processedText = preprocessText(rawText, aiSource);
-    
+
     // 2. Proteger las ecuaciones para que marked.js no rompa subíndices (_) o asteriscos (*)
     let mathBlocks = [];
     let mathId = 0;
-    
+
     // Bloques $$...$$ o \[...\]
     processedText = processedText.replace(/\$\$([\s\S]+?)\$\$/g, (match, p1) => {
         let id = `MATHBLOCKPLACEHOLDER${mathId}XYZ`;
@@ -174,7 +179,7 @@ async function prepareContent(forWord = false) {
         mathId++;
         return id;
     });
-    
+
     // Inline $...$ o \(...\)
     processedText = processedText.replace(/\$([^\n$]+?)\$/g, (match, p1) => {
         let id = `MATHINLINEPLACEHOLDER${mathId}XYZ`;
@@ -191,32 +196,32 @@ async function prepareContent(forWord = false) {
 
     // 3. Convertir Markdown a HTML (Asegura las tablas y formato texto)
     let htmlContent = marked.parse(processedText);
-    
+
     // INYECCIÓN DE ESTILOS EN LÍNEA PARA TABLAS DE WORD
     if (forWord) {
         htmlContent = htmlContent.replace(/<table\b[^>]*>/g, '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; border: 1px solid #000;">');
         htmlContent = htmlContent.replace(/<th\b[^>]*>/g, '<th style="background-color: #4472C4; color: white; font-weight: bold; border: 1px solid #000; text-align: center; padding: 5px;">');
         htmlContent = htmlContent.replace(/<td\b[^>]*>/g, '<td style="border: 1px solid #000; padding: 5px;">');
     }
-    
+
     // 4. Restaurar / Procesar matemáticas
     if (forWord) {
         // Para Word: Generamos MathML nativo
         for (let block of mathBlocks) {
             try {
                 // MathJax.tex2mmlPromise es la API oficial asíncrona para la web
-                let mmlString = await MathJax.tex2mmlPromise(block.tex, {display: block.display});
-                
+                let mmlString = await MathJax.tex2mmlPromise(block.tex, { display: block.display });
+
                 // Asegurar que el namespace esté presente para Word
                 if (!mmlString.includes('xmlns:mml')) {
                     mmlString = mmlString.replace('<math', '<math xmlns:mml="http://www.w3.org/1998/Math/MathML"');
                 }
-                
+
                 // Si es bloque, centrarlo
                 if (block.display) {
                     mmlString = `<div align="center" style="text-align: center; margin: 10px 0;">${mmlString}</div>`;
                 }
-                
+
                 htmlContent = htmlContent.replace(block.id, mmlString);
             } catch (e) {
                 console.error("MathJax conversion error:", e);
@@ -225,7 +230,7 @@ async function prepareContent(forWord = false) {
                 htmlContent = htmlContent.replace(block.id, fallback);
             }
         }
-        
+
         // Aplicar la fuente configurada al HTML crudo y retornarlo INMEDIATAMENTE
         // (Sin inyectarlo en el DOM para evitar que el navegador elimine los namespaces MathML)
         htmlContent = `<div style="font-family: '${fontName}', sans-serif; font-size: ${fontSize}pt;">${htmlContent}</div>`;
@@ -237,20 +242,20 @@ async function prepareContent(forWord = false) {
             htmlContent = htmlContent.replace(block.id, texStr);
         }
     }
-    
+
     // 5. Inyectar en el DOM (Solo para PDF/Vista Web)
     const renderArea = document.getElementById('renderArea');
     renderArea.innerHTML = htmlContent;
-    
+
     // Aplicar estilos generales
     renderArea.style.fontFamily = fontName;
     renderArea.style.fontSize = fontSize + 'pt';
-    
+
     if (!forWord) {
         // Renderizar visualmente con HTML/SVG (MathJax normal)
         await MathJax.typesetPromise([renderArea]);
     }
-    
+
     return { success: true };
 }
 
@@ -266,11 +271,11 @@ async function exportPDF() {
     renderArea.style.display = 'block';
 
     const opt = {
-        margin:       1,
-        filename:     filename,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, windowWidth: 800 },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        margin: 1,
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, windowWidth: 800 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
 
     html2pdf().set(opt).from(renderArea).save().then(() => {
@@ -290,22 +295,23 @@ async function exportWord() {
     const aiSource = document.getElementById('aiSource').value;
     const fontName = document.getElementById('fontSelect').value;
     const fontSize = document.getElementById('fontSize').value;
-    
+
     setStatus('processing', 'info');
-    
+
     const btn = document.getElementById('btnWord');
     const originalBtnHTML = btn.innerHTML;
     const isEnglish = document.documentElement.getAttribute('data-lang') === 'en';
-    
+
     // Cambiar botón a estado de carga
     btn.disabled = true;
     btn.style.opacity = '0.7';
     btn.innerHTML = isEnglish ? '⏳ Processing... (May take a moment)' : '⏳ Procesando... (Puede tardar un momento)';
-    
+
     try {
-        // En producción, cambiaremos esta URL por la de Render
-        const apiUrl = 'https://wordweaver-api-abcd.onrender.com/api/export_word';
-        
+        // MUY IMPORTANTE: Asegúrate de que esta URL sea la de Render para producción
+        // Ejemplo: const apiUrl = 'https://wordweaver-api-abcd.onrender.com/api/export_word';
+        const apiUrl = 'https://wordweaver-api-gbrz.onrender.com/api/export_word';
+
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
@@ -318,37 +324,29 @@ async function exportWord() {
                 fontSize: fontSize
             })
         });
-        
+
         if (!response.ok) {
             throw new Error(`Error del servidor: ${response.status}`);
         }
-        
-        // Procesar descarga del archivo .docx nativo
-        const blob = await response.blob();
-        
-        // Soporte específico para navegadores antiguos de Microsoft (IE/Edge clásico)
-        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-            window.navigator.msSaveOrOpenBlob(blob, `Documento_${aiSource.replace(/ /g, "_")}.docx`);
+
+        const result = await response.json();
+
+        if (result.success && result.download_url) {
+            // El servidor procesó el documento y está listo en una URL.
+            // Para asegurar máxima compatibilidad con navegadores estrictos (Chrome/Edge)
+            // usamos window.location.href. Esto descarga el archivo nativamente sin importar el tiempo de espera.
+
+            const baseUrl = apiUrl.replace('/api/export_word', '');
+            const finalUrl = baseUrl + result.download_url + `?filename=${encodeURIComponent(result.filename)}`;
+
+            // Iniciar la descarga real
+            window.location.href = finalUrl;
+
+            setStatus('success', 'success');
         } else {
-            // Soporte para Chrome, Firefox, Safari, Edge Moderno
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `Documento_${aiSource.replace(/ /g, "_")}.docx`;
-            document.body.appendChild(a);
-            
-            // Simular clic
-            a.click();
-            
-            // Limpiar con un ligero retraso (Crítico para que Google Chrome no cancele la descarga)
-            setTimeout(() => {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 500);
+            throw new Error("El servidor no devolvió una respuesta válida");
         }
-        
-        setStatus('success', 'success');
+
     } catch (error) {
         console.error("Error exportando a Word:", error);
         setStatus('general_error', 'error');
