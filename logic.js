@@ -116,10 +116,12 @@ const translations = {
 // ── Sistema de Visitantes ──
 async function initVisitorCounter() {
     try {
-        // Utilizamos una API pública y gratuita para llevar el conteo
-        const response = await fetch('https://api.counterapi.dev/v1/wordweaver_emil_paz/visits/up');
+        // Obtenemos las visitas a través de NUESTRO PROPIO backend para evitar
+        // que navegadores estrictos (Edge) o AdBlockers bloqueen el contador.
+        const apiUrl = 'https://wordweaver-api-gbrz.onrender.com/api/visits';
+        const response = await fetch(apiUrl);
         const data = await response.json();
-        document.getElementById('visitCount').innerText = data.count;
+        document.getElementById('visitCount').innerText = data.count || "-";
     } catch (error) {
         console.error("No se pudo cargar el contador de visitas:", error);
         document.getElementById('visitCount').innerText = "-";
@@ -328,25 +330,45 @@ async function exportWord() {
         if (!response.ok) {
             throw new Error(`Error del servidor: ${response.status}`);
         }
-
-        const result = await response.json();
-
-        if (result.success && result.download_url) {
-            // El servidor procesó el documento y está listo en una URL.
-            // Para asegurar máxima compatibilidad con navegadores estrictos (Chrome/Edge)
-            // usamos window.location.href. Esto descarga el archivo nativamente sin importar el tiempo de espera.
-
-            const baseUrl = apiUrl.replace('/api/export_word', '');
-            const finalUrl = baseUrl + result.download_url + `?filename=${encodeURIComponent(result.filename)}`;
-
-            // Iniciar la descarga real
-            window.location.href = finalUrl;
-
-            setStatus('success', 'success');
+        
+        // Revisamos qué nos respondió el servidor (JSON nuevo o Archivo viejo)
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+            // --- NUEVO SISTEMA (2 Pasos) ---
+            const result = await response.json();
+            
+            if (result.success && result.download_url) {
+                const baseUrl = apiUrl.replace('/api/export_word', '');
+                const finalUrl = baseUrl + result.download_url + `?filename=${encodeURIComponent(result.filename)}`;
+                window.location.href = finalUrl;
+                setStatus('success', 'success');
+            } else {
+                throw new Error("El servidor no devolvió una respuesta válida");
+            }
         } else {
-            throw new Error("El servidor no devolvió una respuesta válida");
+            // --- VIEJO SISTEMA (Compatibilidad hacia atrás) ---
+            const blob = await response.blob();
+            
+            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                window.navigator.msSaveOrOpenBlob(blob, `Documento_${aiSource.replace(/ /g, "_")}.docx`);
+            } else {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `Documento_${aiSource.replace(/ /g, "_")}.docx`;
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 500);
+            }
+            setStatus('success', 'success');
         }
-
+        
     } catch (error) {
         console.error("Error exportando a Word:", error);
         setStatus('general_error', 'error');
