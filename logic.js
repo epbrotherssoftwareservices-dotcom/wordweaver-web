@@ -91,6 +91,14 @@ function preprocessNotebookLM(text) {
 
 function preprocessGeneric(text) {
     let res = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    
+    // Normalizar ecuaciones que vienen con doble barra invertida (muy común al copiar de NotebookLM)
+    res = res.replace(/\\\\\(/g, '\\(');
+    res = res.replace(/\\\\\)/g, '\\)');
+    res = res.replace(/\\\\\[/g, '\\[');
+    res = res.replace(/\\\\\]/g, '\\]');
+    
+    // Asegurar saltos de línea correctos en bloques matemáticos con $$
     res = res.replace(/([^\n])\$\$/g, '$1\n$$$$');
     res = res.replace(/\$\$([^\n])/g, '$$$$\n$1');
     return res;
