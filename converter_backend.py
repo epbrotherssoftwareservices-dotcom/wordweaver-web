@@ -112,6 +112,10 @@ class DocumentConverter:
         Extracts equations and replaces them with placeholders so the Markdown
         parser does not mangle dollar signs, asterisks, or underscores inside them.
         """
+        # Normalizar ecuaciones que vienen con doble barra invertida (NotebookLM)
+        text = text.replace(r'\\(', r'\(').replace(r'\\)', r'\)')
+        text = text.replace(r'\\[', r'\[').replace(r'\\]', r'\]')
+        
         # Block equations first (longer patterns take priority)
         text = re.sub(r'\$\$([\s\S]+?)\$\$', lambda m: self._replace_math(m, True) + '\n', text)
         text = re.sub(r'\\\[([\s\S]+?)\\\]',  lambda m: self._replace_math(m, True) + '\n', text)
